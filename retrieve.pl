@@ -149,5 +149,7 @@ sub verify_output_destination {
 		$error->("Error: cannot write to $directory");
 	}
 
-	return open(my $fh, '>', $output);
+	open(my $fh, '>', $output);
+
+	return $fh;
 }
