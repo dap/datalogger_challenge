@@ -71,7 +71,7 @@ sub main {
 
 	}
 
-	say "\nSaved $found bytes.";
+	say STDERR "\nSaved $found bytes.";
 }
 
 sub wait_and_display_banner {
