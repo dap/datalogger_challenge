@@ -3,7 +3,6 @@
 use Modern::Perl;
 use Getopt::Long;
 use Device::SerialPort;
-use Time::HiRes qw/usleep/;
 use Tie::Cycle;
 
 $| = 1;
@@ -44,13 +43,22 @@ sub main {
 
 		$port->write( ">r$address\n" );
 
-		usleep 50000;
-		
-		my $data_bytes_read = $port->input();
+		my ( $num_bytes_read, $byte_read);
+		my $num_bytes_to_read = 1;
+		my $response_read = '';
+
+		while ( 3 != length($response_read) ) {
+			($num_bytes_read, $byte_read)
+				= $port->read($num_bytes_to_read);
+
+			$response_read .= $byte_read
+				if $num_bytes_read == $num_bytes_to_read;
+		}
+
 		print $spinner;
 
-		if ( $data_bytes_read ne "r1\0" ) {
-			$data_bytes_read =~ m/r1(.*)/;
+		if ( $response_read ne "r1\0" ) {
+			$response_read =~ m/r1(.*)/;
 			push @found, unpack('a', $1);
 		}
 
