@@ -8,7 +8,6 @@ use Tie::Cycle;
 
 $| = 1;
 
-
 main() if $0 eq __FILE__;
 
 sub main {
