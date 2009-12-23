@@ -34,6 +34,8 @@ sub main {
 
 	tie my $spinner, 'Tie::Cycle', [map {("\b$_")x 5} qw(\ | / -)];
 
+	my $response_buffer = '';
+
 	# 16-bit unsigned integer can hold 2^16 = 65536 different
 	# values, it's range being 0 to 65535.
 	foreach my $address ( 0 .. (2**16 - 1) ) {
@@ -41,19 +43,19 @@ sub main {
 
 		$port->write( ">r$address\n" );
 
-		my ( $num_bytes_read, $byte_read);
-		my $num_bytes_to_read = 1;
-		my $response_read = '';
+		my ( $num_bytes_read, $bytes_read);
+		my $num_bytes_to_read = 3;
+		my $response_read;
 
-		while ( 3 != length($response_read) ) {
-			($num_bytes_read, $byte_read)
+		while ( $num_bytes_to_read > length($response_buffer) ) {
+			($num_bytes_read, $bytes_read)
 				= $port->read($num_bytes_to_read);
 
-			$response_read .= $byte_read
-				if $num_bytes_read == $num_bytes_to_read;
+			$response_buffer .= $bytes_read;
 		}
 
 		print $spinner;
+		$response_read = substr($response_buffer, 0, 3, '');
 
 		if ( 'r1' eq substr($response_read, 0, 2) && $response_read ne "r1\0" ) {
 			print "\b..";
