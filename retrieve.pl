@@ -2,6 +2,8 @@
 
 use Modern::Perl;
 use Getopt::Long;
+use File::Basename;
+use Term::ReadLine;
 use Device::SerialPort;
 use Tie::Cycle;
 
@@ -14,10 +16,13 @@ sub main {
 	my %options;
 
 	GetOptions(
-		"banner" => \($options{'banner'}),
+		'device=s' => \( $options{'device'} ),
+		'banner'   => \( $options{'banner'} ),
+		'output=s' => \( $options{'output'} ),
 	);
 
-	my $dev = verify_specified_device();
+	my $dev = verify_specified_device  ( $options{'device'} );
+	my $out = verify_output_destination( $options{'output'} );
 
 	my $port = Device::SerialPort->new($dev, 0);
 
@@ -30,7 +35,7 @@ sub main {
 		wait_and_display_banner($port);
 	}
 
-	my @found;
+	my $found = 0;
 
 	tie my $spinner, 'Tie::Cycle', [map {("\b$_")x 5} qw(\ | / -)];
 
@@ -54,19 +59,19 @@ sub main {
 			$response_buffer .= $bytes_read;
 		}
 
-		print $spinner;
+		print STDERR $spinner;
 		$response_read = substr($response_buffer, 0, 3, '');
 
 		if ( 'r1' eq substr($response_read, 0, 2) && $response_read ne "r1\0" ) {
-			print "\b..";
+			print STDERR "\b..";
 			$response_read =~ m/r1(.*)/;
-			push @found, unpack('a', $1);
+			print $out $1;
+			$found++;
 		}
 
 	}
 
-	say "\nFound ", scalar(@found) . ' bytes';
-	say join('', @found);
+	say "\nSaved $found bytes.";
 }
 
 sub wait_and_display_banner {
@@ -84,28 +89,65 @@ sub wait_and_display_banner {
 			if $num_bytes_read;
 	}
 
-	say $banner;
+	say STDERR $banner;
 }
 
 sub verify_specified_device {
+	my $device = shift;
 
-	my $error = sub { say $_[0]; exit(1) };
+	my $error = sub { say STDERR $_[0]; exit(1) };
 
-	if ( !$ARGV[0] || $ARGV[0] !~ m/^\/dev/g ) {
+	if ( !$device || $device !~ m/^\/dev/g ) {
 		$error->('Error: No serial device specified.');
 	}
 
-	if ( ! -e $ARGV[0] ) {
+	if ( ! -e $device ) {
 		$error->('Error: Specified device does not exist.');
 	}
 
-	if ( ! -r $ARGV[0] ) {
-		$error->('Error: Specified device does not readable.');
+	if ( ! -r $device ) {
+		$error->('Error: Specified device is not readable.');
 	}
 
-	if ( ! -w $ARGV[0] ) {
-		$error->('Error: Specified device does not writable.');
+	if ( ! -w $device ) {
+		$error->('Error: Specified device is not writable.');
 	}
 
-	return $ARGV[0];
+	return $device;
+}
+
+sub verify_output_destination {
+	my $output = shift;
+
+	my $error = sub { say STDERR $_[0]; exit(1) };
+
+	if ($output eq '-')
+	{
+		return \*STDOUT;
+	}
+
+	if ( !$output ) {
+		$error->('Error: No output path specified.');
+	}
+
+	if ( -e $output ) {
+		my $term = Term::ReadLine->new($0);
+		$term->ornaments(0);
+		my $overwrite = '';
+
+		while ($overwrite ne 'y' && $overwrite ne 'n') {
+			$overwrite = $term->readline('Error: Specified output path already exists. Overwrite (y/n)?');
+			say $overwrite;
+		}
+		$error->('Aborted.')
+			if $overwrite eq 'n';
+	}
+
+	my ($filename, $directory) = fileparse($output);
+
+	if ( ! -w $directory ) {
+		$error->("Error: cannot write to $directory");
+	}
+
+	return open(my $fh, '>', $output);
 }
