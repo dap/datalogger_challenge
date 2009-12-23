@@ -8,11 +8,12 @@ use Tie::Cycle;
 
 $| = 1;
 
-my %options;
 
 main() if $0 eq __FILE__;
 
 sub main {
+
+	my %options;
 
 	GetOptions(
 		"banner" => \($options{'banner'}),
