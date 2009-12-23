@@ -55,7 +55,7 @@ sub main {
 
 		print $spinner;
 
-		if ( $response_read ne "r1\0" ) {
+		if ( 'r1' eq substr($response_read, 0, 2) && $response_read ne "r1\0" ) {
 			print "\b..";
 			$response_read =~ m/r1(.*)/;
 			push @found, unpack('a', $1);
