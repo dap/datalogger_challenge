@@ -34,8 +34,6 @@ sub main {
 
 	tie my $spinner, 'Tie::Cycle', [map {("\b$_")x 5} qw(\ | / -)];
 
-	print 'Working:  ';
-
 	# 16-bit unsigned integer can hold 2^16 = 65536 different
 	# values, it's range being 0 to 65535.
 	foreach my $address ( 0 .. (2**16 - 1) ) {
