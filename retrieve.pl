@@ -88,22 +88,22 @@ sub wait_and_display_banner {
 
 sub verify_specified_device {
 
-	my $message = sub { say $_[0]; exit(1) };
+	my $error = sub { say $_[0]; exit(1) };
 
 	if ( !$ARGV[0] || $ARGV[0] !~ m/^\/dev/g ) {
-		$message->('Error: No serial device specified.');
+		$error->('Error: No serial device specified.');
 	}
 
 	if ( ! -e $ARGV[0] ) {
-		$message->('Error: Specified device does not exist.');
+		$error->('Error: Specified device does not exist.');
 	}
 
 	if ( ! -r $ARGV[0] ) {
-		$message->('Error: Specified device does not readable.');
+		$error->('Error: Specified device does not readable.');
 	}
 
 	if ( ! -w $ARGV[0] ) {
-		$message->('Error: Specified device does not writable.');
+		$error->('Error: Specified device does not writable.');
 	}
 
 	return $ARGV[0];
