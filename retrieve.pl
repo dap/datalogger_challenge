@@ -8,8 +8,6 @@ use Tie::Cycle;
 
 $| = 1;
 
-my $dev = '/dev/ttyUSB0';
-
 my %options;
 
 main() if $0 eq __FILE__;
