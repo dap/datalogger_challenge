@@ -1,17 +1,3 @@
-U. Penn N&T Hacker Challenge #2
-
-Instructions from jorj:
-=======================
-You have an hour. Fastest time wins. The clock starts when I hand you
-these rules.
-
-The box I'm giving you is a datalogger. Given this thing, find out
-where I was on Saturday, April 19th, 2003 at 17:22:36. Also determine
-how fast I was moving.
-
-
-Notes from Darian's entry:
-==========================
 The script that I wrote to grab the data is at retrieve.pl.
 
 MAX232CPE
