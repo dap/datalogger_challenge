@@ -13,12 +13,15 @@ main() if $0 eq __FILE__;
 
 sub main {
 
-	my %options;
+	my %options = (
+		'endianness' => 'little',
+	);
 
 	GetOptions(
-		'device=s' => \( $options{'device'} ),
-		'banner'   => \( $options{'banner'} ),
-		'output=s' => \( $options{'output'} ),
+		'banner'        => \( $options{'banner'}        ),
+		'device=s'      => \( $options{'device'}        ),
+		'endianness=s'  => \( $options{'endianness'}    ),
+		'output=s'      => \( $options{'output'}        ),
 	);
 
 	my $dev = verify_specified_device  ( $options{'device'} );
@@ -37,13 +40,18 @@ sub main {
 
 	my $found = 0;
 
+	my $read_pack_format
+		= $options{'endianness'} eq 'little'
+		? 'v'
+		: 'n';
+
 	tie my $spinner, 'Tie::Cycle', [map {("\b$_")x 5} qw(\ | / -)];
 
 	# 16-bit unsigned integer can hold 2^16 = 65536 different
 	# values, it's range being 0 to 65535.
 	foreach my $address ( 0 .. (2**16 - 1) ) {
 
-		$address = pack('v', $address);
+		$address = pack($read_pack_format, $address);
 
 		$port->write( ">r$address\n" );
 
