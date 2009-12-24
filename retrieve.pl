@@ -39,36 +39,29 @@ sub main {
 
 	tie my $spinner, 'Tie::Cycle', [map {("\b$_")x 5} qw(\ | / -)];
 
-	my $response_buffer = '';
-
 	# 16-bit unsigned integer can hold 2^16 = 65536 different
 	# values, it's range being 0 to 65535.
 	foreach my $address ( 0 .. (2**16 - 1) ) {
-		$address = pack('n', $address);
+
+		$address = pack('v', $address);
 
 		$port->write( ">r$address\n" );
 
-		my ( $num_bytes_read, $bytes_read);
-		my $num_bytes_to_read = 3;
-		my $response_read;
+		my $total_bytes_read = 0;
+		my $num_bytes_read   = 0;
+		my $bytes_read;
 
-		while ( $num_bytes_to_read > length($response_buffer) ) {
+		while ($total_bytes_read != 3 ) {
 			($num_bytes_read, $bytes_read)
-				= $port->read($num_bytes_to_read);
-
-			$response_buffer .= $bytes_read;
+				= $port->read(1);
+			$total_bytes_read += $num_bytes_read;
 		}
 
 		print STDERR $spinner;
-		$response_read = substr($response_buffer, 0, 3, '');
 
-		if ( 'r1' eq substr($response_read, 0, 2) && $response_read ne "r1\0" ) {
-			print STDERR "\b..";
-			$response_read =~ m/r1(.*)/;
-			print $out $1;
-			$found++;
-		}
-
+		syswrite $out, $bytes_read;
+		$bytes_read = 0;
+		$found++;
 	}
 
 	say STDERR "\nSaved $found bytes.";
@@ -120,11 +113,6 @@ sub verify_output_destination {
 	my $output = shift;
 
 	my $error = sub { say STDERR $_[0]; exit(1) };
-
-	if ($output eq '-')
-	{
-		return \*STDOUT;
-	}
 
 	if ( !$output ) {
 		$error->('Error: No output path specified.');
